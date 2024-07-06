@@ -175,6 +175,11 @@
                         Cursor=""
                         Icon="{ui:SymbolIcon PersonAdd20}"
                         IsEnabled="{Binding CreateAssistantButtonEnable}" />
+                    <ui:Button
+                        Margin="5,5,0,0"
+                        Command="{Binding DeleteAssistantButtonClickCommand}"
+                        Icon="{ui:SymbolIcon Delete20}"
+                        IsEnabled="{Binding AssistantInfoEnable}" />
                 </StackPanel>
                 <ui:TextBlock
                     Margin="0,5,0,0"

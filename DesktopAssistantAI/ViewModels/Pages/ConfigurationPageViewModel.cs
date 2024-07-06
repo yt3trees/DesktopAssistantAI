@@ -451,6 +451,56 @@ public partial class ConfigurationPageViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task OnDeleteAssistantButtonClick()
+    {
+        try
+        {
+            IsAssistantListProgressBarActive = true;
+            OpenAIService openAiService = AssistantsApiService.CreateOpenAIService(SelectedOpenAIApiConfigItem.ConfigurationName);
+
+            string message = $"Do you want to delete assistant?\r\n" +
+                $"Assistant Name: {SelectedAssistantsApiItem.AssistantName}\r\n" +
+                $"Assistant Id: {SelectedAssistantsApiItem.AssistantId}\r\n" +
+                $"Configuration: {SelectedAssistantsApiItem.ConfigurationName}";
+            Wpf.Ui.Controls.MessageBoxResult messageResult = await new Wpf.Ui.Controls.MessageBox
+            {
+                Title = "Confirm",
+                Content = message,
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel"
+            }.ShowDialogAsync();
+
+            if (messageResult != Wpf.Ui.Controls.MessageBoxResult.Primary)
+            {
+                return;
+            }
+
+            var response = await openAiService.AssistantDelete(SelectedAssistantsApiItem.AssistantId);
+
+            if (response.Successful)
+            {
+                await MessageBoxHelper.ShowMessageAsync("Success", "Delete Assistant succeeded.");
+            }
+            else
+            {
+                throw new Exception(response.Error.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            await new Wpf.Ui.Controls.MessageBox
+            {
+                Title = "Error",
+                Content = ex.Message,
+            }.ShowDialogAsync();
+        }
+        finally
+        {
+            IsAssistantListProgressBarActive = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task OnOpenVectorStore()
     {
         try
