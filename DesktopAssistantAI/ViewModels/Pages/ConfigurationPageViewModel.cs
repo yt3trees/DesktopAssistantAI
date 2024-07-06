@@ -4,7 +4,6 @@ using DesktopAssistantAI.Services;
 using DesktopAssistantAI.ViewModels.Dialogs;
 using DesktopAssistantAI.Views.Dialogs;
 using DesktopAssistantAI.Views.SubWindows;
-using OpenAI;
 using OpenAI.Managers;
 using OpenAI.ObjectModels.RequestModels;
 using OpenAI.ObjectModels.ResponseModels.VectorStoreResponseModels;
@@ -29,8 +28,7 @@ public partial class ConfigurationPageViewModel : ObservableObject
     {
         if (value != null)
         {
-            ConfigurationName = value.ConfigurationName;
-            SelectedOpenAIApiConfigItem = OpenAIApiConfigManager.GetOpenAIApiConfig(ConfigurationName);
+            SelectedOpenAIApiConfigItem = OpenAIApiConfigManager.GetOpenAIApiConfig(SelectedOpenAIApiConfigItem.ConfigurationName);
             AssistantName = value.AssistantName;
             AssistantId = value.AssistantId;
 
@@ -65,8 +63,6 @@ public partial class ConfigurationPageViewModel : ObservableObject
     {
         if (SelectedOpenAIApiConfigItem != null)
         {
-            ConfigurationName = SelectedOpenAIApiConfigItem.ConfigurationName;
-
             FilterAssistantsApiConfigItems();
         }
     }
@@ -79,9 +75,6 @@ public partial class ConfigurationPageViewModel : ObservableObject
 
     [ObservableProperty]
     private AvatarConfig _selectedAvatarConfigItem;
-
-    [ObservableProperty]
-    private string _configurationName = string.Empty;
 
     [ObservableProperty]
     private string _assistantId = string.Empty;
@@ -238,7 +231,7 @@ public partial class ConfigurationPageViewModel : ObservableObject
         try
         {
             IsAssistantProgressBarActive = true;
-            OpenAIService openAiService = AssistantsApiService.CreateOpenAIService(ConfigurationName);
+            OpenAIService openAiService = AssistantsApiService.CreateOpenAIService(SelectedOpenAIApiConfigItem.ConfigurationName);
 
             var listModels = (await openAiService.ListModel()).Models;
             foreach (var model in listModels)
@@ -252,7 +245,7 @@ public partial class ConfigurationPageViewModel : ObservableObject
             }
             ModelList.Sort();
 
-            var assistant = await openAiService.AssistantRetrieve(AssistantId);
+            var assistant = await openAiService.AssistantRetrieve(SelectedAssistantsApiItem.AssistantId);
             AssistantName = assistant.Name;
             Instructions = assistant.Instructions;
             Model = assistant.Model;
@@ -323,28 +316,7 @@ public partial class ConfigurationPageViewModel : ObservableObject
         try
         {
             IsAssistantProgressBarActive = true;
-            AssistantConfigMerger? assistantConfig = ConfigCombiner.MergeConfigBySelectedAssistantId();
-            if (assistantConfig == null)
-            {
-                throw new Exception("not selected assistant config.");
-            }
-
-            OpenAIService openAiService = assistantConfig.Provider == "OpenAI"
-                ? new OpenAIService(new OpenAiOptions()
-                {
-                    UseBeta = true,
-                    ProviderType = ProviderType.OpenAi,
-                    ApiKey = assistantConfig.ApiKey,
-                })
-                : new OpenAIService(new OpenAiOptions()
-                {
-                    UseBeta = true,
-                    ProviderType = ProviderType.Azure,
-                    ApiKey = assistantConfig.ApiKey,
-                    BaseDomain = assistantConfig.AzureResourceUrl,
-                    ApiVersion = assistantConfig.AzureApiVersion,
-                    ValidateApiOptions = false,
-                });
+            OpenAIService openAiService = AssistantsApiService.CreateOpenAIService(SelectedOpenAIApiConfigItem.ConfigurationName);
 
             List<OpenAI.ObjectModels.RequestModels.ToolDefinition> tools = new List<OpenAI.ObjectModels.RequestModels.ToolDefinition>();
             if (ToolFileSearch)
@@ -367,7 +339,7 @@ public partial class ConfigurationPageViewModel : ObservableObject
                 TopP = TopP,
             };
 
-            AssistantResponse modify = await openAiService.AssistantModify(assistantConfig.AssistantId, modifyRequest);
+            AssistantResponse modify = await openAiService.AssistantModify(SelectedAssistantsApiItem.AssistantId, modifyRequest);
 
             if (modify.Successful == true)
             {
@@ -437,6 +409,10 @@ public partial class ConfigurationPageViewModel : ObservableObject
                     .Where(e => !selectedAssistants.Any(a => a.AssistantId == e.AssistantId))
                     .ToList();
 
+                var assistantsToUpdate = filteredExistingAssistants
+                           .Where(e => selectedAssistants.Any(a => a.AssistantId == e.AssistantId && a.AssistantName != e.AssistantName))
+                           .ToList();
+
                 foreach (var assistant in assistantsToAdd)
                 {
                     assistantsApiConfigsForSave.Add(assistant);
@@ -445,6 +421,12 @@ public partial class ConfigurationPageViewModel : ObservableObject
                 foreach (var assistant in assistantsToRemove)
                 {
                     assistantsApiConfigsForSave.Remove(assistant);
+                }
+
+                foreach (var assistant in assistantsToUpdate)
+                {
+                    var updatedAssistant = selectedAssistants.First(a => a.AssistantId == assistant.AssistantId);
+                    assistant.AssistantName = updatedAssistant.AssistantName;
                 }
 
                 App.Current.AssistantsApiConfigs = assistantsApiConfigsForSave;
@@ -473,7 +455,7 @@ public partial class ConfigurationPageViewModel : ObservableObject
     {
         try
         {
-            OpenAIService openAiService = AssistantsApiService.CreateOpenAIService(ConfigurationName);
+            OpenAIService openAiService = AssistantsApiService.CreateOpenAIService(SelectedOpenAIApiConfigItem.ConfigurationName);
 
             VectorStoreFileListRequest vectorRequest = new VectorStoreFileListRequest();
 
@@ -493,7 +475,7 @@ public partial class ConfigurationPageViewModel : ObservableObject
 
             var vectorStoreInfo = await openAiService.RetrieveVectorStore(VectorStoreId);
 
-            var window = new VectorStoreInfo(vectorStoreInfo, vectorFileList, ConfigurationName);
+            var window = new VectorStoreInfo(vectorStoreInfo, vectorFileList, SelectedOpenAIApiConfigItem.ConfigurationName);
             window.ShowDialog();
         }
         catch (Exception ex)
