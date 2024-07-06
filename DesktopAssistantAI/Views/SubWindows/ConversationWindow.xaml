@@ -1,0 +1,276 @@
+﻿<ui:FluentWindow
+    x:Class="DesktopAssistantAI.Views.SubWindows.ConversationWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="clr-namespace:DesktopAssistantAI.Helpers.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:helpers="clr-namespace:DesktopAssistantAI.Helpers"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:local="clr-namespace:DesktopAssistantAI.Views.SubWindows"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:md="clr-namespace:Neo.Markdig.Xaml;assembly=Neo.Markdig.Xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:DesktopAssistantAI.ViewModels.SubWindows"
+    Title="ConversationWindow"
+    Width="900"
+    Height="650"
+    d:DataContext="{d:DesignInstance vm:ConversationWindowViewModel,
+                                     IsDesignTimeCreatable=False}"
+    ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+    ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    KeyDown="FluentWindow_KeyDown"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <ResourceDictionary>
+            <BooleanToVisibilityConverter x:Key="BoolVisibilityConverter" />
+            <converter:BooleanToVisibilityConverter2 x:Key="BoolVisibilityConverter2" />
+            <converter:NullOrEmptyToBooleanConverter x:Key="NullOrEmptyToBooleanConverter" />
+            <converter:EmptyOrNullArrayToBoolConverter x:Key="EmptyOrNullArrayToBoolConverter" />
+            <converter:CollectionEmptyToVisibilityConverter x:Key="CollectionEmptyToVisibilityConverter" />
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ui:TitleBar
+            x:Name="TitleBar"
+            Title="{Binding Title}"
+            Grid.Row="0"
+            Header="" />
+        <ProgressBar
+            Grid.Row="0"
+            VerticalAlignment="Bottom"
+            IsIndeterminate="{Binding IsProgressBarActive}"
+            Visibility="{Binding IsProgressBarActive, Converter={StaticResource BoolVisibilityConverter}}" />
+        <ScrollViewer Grid.Row="1">
+            <ListBox
+                Margin="0,0,0,20"
+                HorizontalAlignment="Stretch"
+                ItemsSource="{Binding Messages}"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="IsHitTestVisible" Value="True" />
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="Focusable" Value="False" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ContentPresenter />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <!--#region Conversation-->
+                            <Border
+                                Padding="10,5,10,10"
+                                HorizontalAlignment="Stretch"
+                                BorderBrush="Gray"
+                                BorderThickness="1">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Role}" Value="user">
+                                                <Setter Property="Margin" Value="100,10,25,10" />
+                                                <Setter Property="HorizontalAlignment" Value="Right" />
+                                                <Setter Property="CornerRadius" Value="15,15,0,15" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Role}" Value="assistant">
+                                                <Setter Property="Margin" Value="25,10,100,0" />
+                                                <Setter Property="HorizontalAlignment" Value="Left" />
+                                                <Setter Property="CornerRadius" Value="15,15,15,0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="0,0,0,5"
+                                        FontWeight="Bold"
+                                        Text="{Binding Role}" />
+                                    <ItemsControl HorizontalAlignment="Stretch" ItemsSource="{Binding FlowDocumentContent}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <FlowDocumentScrollViewer
+                                                        Margin="-15,-15,-15,-15"
+                                                        VerticalAlignment="Top"
+                                                        Document="{Binding FlowDocumentText.FlowDocumentValue}"
+                                                        PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
+                                                        <FlowDocumentScrollViewer.CommandBindings>
+                                                            <CommandBinding Command="{x:Static md:MarkdownXaml.Hyperlink}" Executed="CommandBinding_Executed" />
+                                                        </FlowDocumentScrollViewer.CommandBindings>
+                                                    </FlowDocumentScrollViewer>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <GroupBox
+                                        Margin="0,10,0,0"
+                                        Padding="10"
+                                        HorizontalAlignment="Left"
+                                        Header="Referenced Files">
+                                        <GroupBox.Style>
+                                            <Style TargetType="GroupBox">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding AnnotationsList, Converter={StaticResource EmptyOrNullArrayToBoolConverter}}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </GroupBox.Style>
+                                        <ItemsControl HorizontalAlignment="Left" ItemsSource="{Binding AnnotationsList}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                                        <ui:TextBlock Text="{Binding Annotation}" />
+                                                        <ui:TextBlock Text=" : " />
+                                                        <ui:TextBlock Text="{Binding FileName}" />
+                                                        <Label Margin="10,0,0,0" Content="{Binding FileId}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </GroupBox>
+                                </StackPanel>
+                            </Border>
+                            <!--#endregion-->
+                            <!--#region Tokens & Instructions & CodeInterpreter-->
+                            <StackPanel Margin="30,5,0,10" Orientation="Horizontal">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding TotalTokens}" Value="0">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <ui:TextBlock VerticalAlignment="Center" Text="{Binding TotalTokens, StringFormat='{}{0} · '}" />
+                                <ui:TextBlock VerticalAlignment="Center" Text="{Binding PromptTokens, StringFormat='{}{0} in, '}" />
+                                <ui:TextBlock
+                                    Margin="0,0,10,0"
+                                    VerticalAlignment="Center"
+                                    Text="{Binding CompletionTokens, StringFormat='{}{0} out'}" />
+                                <ui:Button
+                                    Margin="0,0,5,0"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding DataContext.GetInstructionsCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                    CommandParameter="{Binding Instructions}"
+                                    Content="Instructions"
+                                    Icon="{ui:SymbolIcon Open20}">
+                                    <ui:Button.Style>
+                                        <Style BasedOn="{StaticResource DefaultUiButtonStyle}" TargetType="ui:Button">
+                                            <Setter Property="IsEnabled" Value="True" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Instructions, Converter={StaticResource NullOrEmptyToBooleanConverter}}" Value="False">
+                                                    <Setter Property="IsEnabled" Value="False" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ui:Button.Style>
+                                </ui:Button>
+                                <ui:Button
+                                    Margin="0,0,5,0"
+                                    Command="{Binding DataContext.GetCodeCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                    CommandParameter="{Binding}"
+                                    Content="Code interpreter"
+                                    Icon="{ui:SymbolIcon CodeBlock20}"
+                                    Visibility="{Binding IsCodeInterpreter, Converter={StaticResource BoolVisibilityConverter2}}" />
+                            </StackPanel>
+                            <!--#endregion-->
+                            <!--#region File information-->
+                            <ItemsControl HorizontalAlignment="Stretch" ItemsSource="{Binding Content}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <GroupBox
+                                            Margin="0,0,30,0"
+                                            Padding="10"
+                                            HorizontalAlignment="Right"
+                                            FontSize="20"
+                                            Header="Image File">
+                                            <GroupBox.Style>
+                                                <Style TargetType="GroupBox">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ImageFile}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </GroupBox.Style>
+                                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                                <ui:Button
+                                                    Command="{Binding DataContext.OpenFileInfoCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="{Binding ImageFile.FileId}"
+                                                    Icon="{ui:SymbolIcon Image20}" />
+                                                <ui:Button
+                                                    Margin="5,0,0,0"
+                                                    Command="{Binding DataContext.FileDownloadCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="Download"
+                                                    Icon="{ui:SymbolIcon CloudArrowDown20}"
+                                                    Visibility="{Binding ImageFile, Converter={StaticResource NullOrEmptyToBooleanConverter}}" />
+                                            </StackPanel>
+                                        </GroupBox>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <GroupBox
+                                Margin="0,0,30,0"
+                                Padding="10"
+                                HorizontalAlignment="Right"
+                                FontSize="20"
+                                Header="File">
+                                <GroupBox.Style>
+                                    <Style TargetType="GroupBox">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Attachments, Converter={StaticResource EmptyOrNullArrayToBoolConverter}}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </GroupBox.Style>
+                                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                    <ItemsControl ItemsSource="{Binding Attachments}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel
+                                                    Margin="0,0,5,0"
+                                                    HorizontalAlignment="Right"
+                                                    Orientation="Horizontal">
+                                                    <ui:Button
+                                                        Command="{Binding DataContext.OpenFileInfoCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{Binding FileId}"
+                                                        Icon="{ui:SymbolIcon Document20}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <ui:Button
+                                        Command="{Binding DataContext.FileDownloadCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        CommandParameter="{Binding}"
+                                        Content="Download"
+                                        Icon="{ui:SymbolIcon CloudArrowDown20}"
+                                        Visibility="{Binding Attachments, Converter={StaticResource CollectionEmptyToVisibilityConverter}}" />
+                                </StackPanel>
+                            </GroupBox>
+                            <!--#endregion-->
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </ScrollViewer>
+    </Grid>
+</ui:FluentWindow>

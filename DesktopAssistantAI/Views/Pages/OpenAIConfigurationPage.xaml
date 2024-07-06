@@ -1,0 +1,122 @@
+﻿<Page
+    x:Class="DesktopAssistantAI.Views.Pages.OpenAIConfigurationPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="clr-namespace:DesktopAssistantAI.Helpers.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:DesktopAssistantAI.Views.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="clr-namespace:DesktopAssistantAI.Models"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:DesktopAssistantAI.ViewModels.Pages"
+    Title="Configuration"
+    d:DataContext="{d:DesignInstance local:OpenAIConfigurationPage,
+                                     IsDesignTimeCreatable=False}"
+    d:DesignHeight="600"
+    d:DesignWidth="800"
+    ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+    ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    mc:Ignorable="d">
+    <Page.Resources>
+        <ResourceDictionary>
+            <converter:EnumToBooleanConverter x:Key="EnumToBoolean" />
+        </ResourceDictionary>
+    </Page.Resources>
+    <Page.DataContext>
+        <vm:OpenAIConfigurationPageViewModel />
+    </Page.DataContext>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <ui:TextBlock FontSize="24" Text="Configuration" />
+            <Grid Margin="0,5,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ComboBox
+                    x:Name="ConfigurationNameComboBox"
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    DisplayMemberPath="ConfigurationName"
+                    ItemsSource="{Binding OpenAIApiConfigItems}"
+                    SelectedItem="{Binding SelectedOpenAIApiConfigItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <ui:Button
+                    Grid.Column="1"
+                    Margin="5,0,0,0"
+                    HorizontalAlignment="Right"
+                    Appearance="Secondary"
+                    Command="{Binding AddButtonClickCommand}"
+                    Content="Add"
+                    Icon="{ui:SymbolIcon Addcircle20}" />
+                <ui:Button
+                    Grid.Column="2"
+                    Margin="5,0,0,0"
+                    HorizontalAlignment="Right"
+                    Appearance="Secondary"
+                    Command="{Binding DeleteButtonClickCommand}"
+                    Content="Delete"
+                    Icon="{ui:SymbolIcon Delete20}" />
+            </Grid>
+            <ui:TextBlock
+                Margin="0,20,0,0"
+                FontSize="16"
+                Text="Configuration Name" />
+            <ui:TextBox Text="{Binding ConfigurationName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <ui:TextBlock
+                Margin="0,5,0,0"
+                FontSize="16"
+                Text="Provicer" />
+            <RadioButton Content="OpenAI" IsChecked="{Binding Path=RadioButtonChoice, Mode=TwoWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=OpenAI, UpdateSourceTrigger=PropertyChanged}" />
+            <RadioButton Content="Azure OpenAI" IsChecked="{Binding Path=RadioButtonChoice, Mode=TwoWay, Converter={StaticResource EnumToBoolean}, ConverterParameter=AzureOpenAI, UpdateSourceTrigger=PropertyChanged}" />
+            <ui:TextBlock
+                Margin="0,5,0,0"
+                FontSize="16"
+                Text="API Key" />
+            <ui:PasswordBox Password="{Binding ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <ui:TextBlock
+                Margin="0,5,0,0"
+                FontSize="16"
+                IsEnabled="{Binding IsAzureOpenAI}"
+                Text="Azure Resource URL" />
+            <ui:TextBox
+                IsEnabled="{Binding IsAzureOpenAI}"
+                PlaceholderText="https://xxxxx.openai.azure.com/"
+                Text="{Binding AzureResourceUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <ui:TextBlock
+                Margin="0,5,0,0"
+                FontSize="16"
+                IsEnabled="{Binding IsAzureOpenAI}"
+                Text="API Version" />
+            <ui:TextBox
+                IsEnabled="{Binding IsAzureOpenAI}"
+                PlaceholderText="yyyy-MM-dd"
+                Text="{Binding AzureApiVersion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+        <StackPanel
+            Grid.Row="1"
+            Margin="0,10,0,0"
+            HorizontalAlignment="Right">
+            <ui:Flyout IsOpen="{Binding IsFlyoutOpen, Mode=TwoWay}" Placement="Left">
+                <StackPanel>
+                    <TextBlock
+                        HorizontalAlignment="Left"
+                        Text="Saved"
+                        TextWrapping="WrapWithOverflow" />
+                </StackPanel>
+            </ui:Flyout>
+            <ui:Button
+                Margin="0,0,10,0"
+                HorizontalAlignment="Right"
+                Appearance="Primary"
+                Command="{Binding SaveButtonClickCommand, Mode=OneWay}"
+                Content="Save"
+                Icon="{ui:SymbolIcon Save20}" />
+        </StackPanel>
+    </Grid>
+</Page>

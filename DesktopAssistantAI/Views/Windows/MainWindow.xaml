@@ -1,0 +1,430 @@
+﻿<Window
+    x:Class="DesktopAssistantAI.Views.Windows.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="clr-namespace:DesktopAssistantAI.Helpers.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:helpers="clr-namespace:DesktopAssistantAI.Helpers"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:local="clr-namespace:DesktopAssistantAI.Views.Windows"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:md="clr-namespace:Neo.Markdig.Xaml;assembly=Neo.Markdig.Xaml"
+    xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:DesktopAssistantAI.ViewModels.Windows"
+    Title="{Binding ApplicationTitle, Mode=OneWay}"
+    d:DataContext="{d:DesignInstance vm:MainWindowViewModel,
+                                     IsDesignTimeCreatable=False}"
+    ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+    ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    AllowsTransparency="True"
+    Background="Transparent"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    MouseLeftButtonDown="Window_MouseLeftButtonDown"
+    MouseLeftButtonUp="Window_MouseLeftButtonUp"
+    MouseMove="Window_MouseMove"
+    ShowInTaskbar="False"
+    SizeToContent="WidthAndHeight"
+    Topmost="True"
+    WindowStyle="None"
+    mc:Ignorable="d">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Closing">
+            <i:InvokeCommandAction Command="{Binding WindowClosingCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}" />
+        </i:EventTrigger>
+        <i:EventTrigger EventName="Deactivated">
+            <i:InvokeCommandAction Command="{Binding WindowDeactivatedCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}" />
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolVisibilityConverter" />
+        <converter:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+        <converter:NullOrEmptyToBooleanConverter x:Key="NullOrEmptyToBooleanConverter" />
+    </Window.Resources>
+    <Window.DataContext>
+        <vm:MainWindowViewModel />
+    </Window.DataContext>
+    <Grid x:Name="MainGrid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="900" />
+            <ColumnDefinition Width="300" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" MinHeight="{Binding GridMinHeight}" />
+            <RowDefinition MinHeight="35" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ContextMenu>
+            <ContextMenu>
+                <ui:MenuItem Header="Select Assistant" Icon="{ui:SymbolIcon PeopleSwap20}">
+                    <ComboBox
+                        Margin="-10,-10,-10,-10"
+                        DisplayMemberPath="AssistantName"
+                        ItemsSource="{Binding AssistantsApiConfigs}"
+                        SelectedItem="{Binding SelectedAssistant, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </ui:MenuItem>
+                <ui:MenuItem Header="Tool Choice" Icon="{ui:SymbolIcon Wrench20}">
+                    <Grid
+                        Width="120"
+                        Margin="0,0,0,0"
+                        HorizontalAlignment="Stretch">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ToggleButton
+                            Grid.Column="0"
+                            MinHeight="35"
+                            Padding="0,0,0,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            IsChecked="{Binding ToolChoiceNone, Mode=TwoWay}"
+                            IsEnabled="{Binding SendButtonEnable}"
+                            ToolTip="Do not force the tool to be called.">
+                            <ui:SymbolIcon FontSize="20" Symbol="TextDescription20" />
+                        </ToggleButton>
+                        <ToggleButton
+                            Grid.Column="1"
+                            MinHeight="35"
+                            Padding="0,0,0,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            IsChecked="{Binding ToolChoiceCodeInterpreter, Mode=TwoWay}"
+                            IsEnabled="{Binding SendButtonEnable}"
+                            ToolTip="Force the code interpreter to call.">
+                            <ui:SymbolIcon FontSize="20" Symbol="CodeBlock20" />
+                        </ToggleButton>
+                        <ToggleButton
+                            Grid.Column="2"
+                            MinHeight="35"
+                            Padding="0,0,0,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            IsChecked="{Binding ToolChoiceFileSearch, Mode=TwoWay}"
+                            IsEnabled="{Binding SendButtonEnable}"
+                            ToolTip="Force the File Search to call.">
+                            <ui:SymbolIcon FontSize="20" Symbol="DocumentSearch20" />
+                        </ToggleButton>
+                    </Grid>
+                </ui:MenuItem>
+                <ui:MenuItem Header="Open Conversation">
+                    <ui:MenuItem.Icon>
+                        <ui:SymbolIcon Filled="{Binding ActiveThreadId, Converter={StaticResource NullOrEmptyToBooleanConverter}}" Symbol="Chat20" />
+                    </ui:MenuItem.Icon>
+                    <ui:MenuItem
+                        Command="{Binding OpenConversationCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                        Header="{Binding ActiveThreadId}"
+                        Icon="{ui:SymbolIcon Chat20}"
+                        Visibility="{Binding ActiveThreadId, Converter={StaticResource StringToVisibilityConverter}}" />
+                    <ui:MenuItem
+                        Command="{Binding OpenConversationResetCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                        Header="Set Thread ID"
+                        Icon="{ui:SymbolIcon ChatAdd20}" />
+                </ui:MenuItem>
+                <ui:MenuItem
+                    Command="{Binding OpenSettingsWindowCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                    Header="Settings"
+                    Icon="{ui:SymbolIcon Settings20}" />
+                <ui:MenuItem
+                    Click="CloseMenuItem_Click"
+                    Header="Exit"
+                    Icon="{ui:SymbolIcon ArrowExit20}" />
+            </ContextMenu>
+        </Grid.ContextMenu>
+        <Border
+            x:Name="ResizableBorder"
+            Grid.Row="0"
+            Grid.Column="0"
+            Width="300"
+            MaxHeight="{Binding ResponseTextBoxMaxHeight}"
+            Margin="0,0,-60,40"
+            Padding="10,5,10,10"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            d:Height="150"
+            Background="{DynamicResource ApplicationBackgroundBrush}"
+            BorderBrush="Gray"
+            BorderThickness="1"
+            CornerRadius="15,15,0,15"
+            Visibility="{Binding ResponseTextBoxVisible, Converter={StaticResource BoolVisibilityConverter}}">
+            <Grid>
+                <FlowDocumentScrollViewer
+                    MaxHeight="{Binding ResponseTextBoxMaxHeight}"
+                    Margin="-15,-5,-15,-10"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Document="{Binding ResponseText}"
+                    Visibility="{Binding ResponseTextBoxVisible, Converter={StaticResource BoolVisibilityConverter}}">
+                    <FlowDocumentScrollViewer.CommandBindings>
+                        <CommandBinding Command="{x:Static md:MarkdownXaml.Hyperlink}" Executed="CommandBinding_Executed" />
+                    </FlowDocumentScrollViewer.CommandBindings>
+                </FlowDocumentScrollViewer>
+                <Thumb
+                    Width="12"
+                    Height="12"
+                    Margin="-10,-10,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Cursor="SizeNWSE"
+                    DragDelta="Thumb_DragDelta"
+                    Opacity="0" />
+                <Thumb
+                    Width="12"
+                    Margin="-10,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Cursor="SizeWE"
+                    DragDelta="HorizontalThumb_DragDelta"
+                    Opacity="0" />
+                <Thumb
+                    Height="12"
+                    Margin="0,-10,0,0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    Cursor="SizeNS"
+                    DragDelta="VerticalThumb_DragDelta"
+                    Opacity="0" />
+            </Grid>
+        </Border>
+        <StackPanel
+            Grid.Row="0"
+            Grid.Column="1"
+            VerticalAlignment="Bottom">
+            <i:Interaction.Triggers>
+                <i:EventTrigger EventName="MouseEnter">
+                    <i:InvokeCommandAction Command="{Binding MouseEnterCommand}" />
+                </i:EventTrigger>
+                <i:EventTrigger EventName="MouseLeave">
+                    <i:InvokeCommandAction Command="{Binding MouseLeaveCommand}" />
+                </i:EventTrigger>
+            </i:Interaction.Triggers>
+            <ui:Flyout IsOpen="{Binding IsFlyoutOpen, Mode=TwoWay}">
+                <StackPanel>
+                    <TextBlock
+                        HorizontalAlignment="Left"
+                        Text="Active thread has been cleared."
+                        TextWrapping="WrapWithOverflow" />
+                </StackPanel>
+            </ui:Flyout>
+            <Image
+                x:Name="AssistantImage"
+                Width="{Binding AvatarSize}"
+                Height="{Binding AvatarSize}"
+                VerticalAlignment="Bottom"
+                d:Height="150"
+                d:Source="pack://application:,,,/Assets/OpenAI.png"
+                d:Width="150"
+                Opacity="{Binding AvatarOpacity}"
+                Source="{Binding SelectedAvatarConfigItem.AvatarImagePath}">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="MouseLeftButtonDown">
+                        <i:InvokeCommandAction Command="{Binding ClearActiveThreadCommand}" PassEventArgsToCommand="True" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+            </Image>
+            <ContentPresenter x:Name="RootContentDialogPresenter" Grid.Row="0" />
+        </StackPanel>
+        <StackPanel
+            Grid.Row="1"
+            Grid.Column="1"
+            Orientation="Horizontal">
+            <Grid Visibility="{Binding UserInputTextBoxVisible, Converter={StaticResource BoolVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="MouseEnter">
+                        <i:InvokeCommandAction Command="{Binding MouseEnterCommand}" />
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="MouseLeave">
+                        <i:InvokeCommandAction Command="{Binding MouseLeaveCommand}" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+                <ui:Flyout
+                    Grid.Column="0"
+                    IsOpen="{Binding IsAttachFlyoutOpen}"
+                    Placement="Top">
+                    <StackPanel>
+                        <ui:Button
+                            Margin="-10,-10,-10,0"
+                            Command="{Binding UploadFlyoutOpenCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource Self}, Mode=OneWay}"
+                            Content="Upload file"
+                            Icon="{ui:SymbolIcon ArrowUpload20}" />
+                        <ui:Button
+                            Margin="-10,3,-10,0"
+                            Command="{Binding ImageUploadFlyoutOpenCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource Self}, Mode=OneWay}"
+                            Content="Upload image"
+                            Icon="{ui:SymbolIcon Image20}" />
+                        <ui:Button
+                            Margin="-10,3,-10,-10"
+                            Command="{Binding SetImageFromUrlCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                            Content="Link to image"
+                            Icon="{ui:SymbolIcon Link20}" />
+                    </StackPanel>
+                </ui:Flyout>
+                <ui:Flyout
+                    Grid.Column="0"
+                    IsOpen="{Binding IsUploadFlyoutOpen}"
+                    Placement="Mouse">
+                    <StackPanel>
+                        <ui:Button
+                            Margin="-10,-10,-10,0"
+                            Command="{Binding UploadImageAndAttachCommand}"
+                            CommandParameter="{Binding Content, RelativeSource={RelativeSource Self}}"
+                            Content="File Search"
+                            Icon="{ui:SymbolIcon DocumentSearch20}" />
+                        <ui:Button
+                            Margin="-10,3,-10,-10"
+                            Command="{Binding UploadImageAndAttachCommand}"
+                            CommandParameter="{Binding Content, RelativeSource={RelativeSource Self}}"
+                            Content="Code Interpreter"
+                            Icon="{ui:SymbolIcon CodeBlock20}" />
+                    </StackPanel>
+                </ui:Flyout>
+                <ui:Flyout
+                    Grid.Column="0"
+                    IsOpen="{Binding IsImageUploadFlyoutOpen}"
+                    Placement="Mouse">
+                    <StackPanel>
+                        <ui:Button
+                            Margin="-10,-10,-10,0"
+                            Command="{Binding UploadImageAndAttachCommand}"
+                            CommandParameter="{Binding Content, RelativeSource={RelativeSource Self}}"
+                            Content="Select file"
+                            Icon="{ui:SymbolIcon DocumentSearch20}" />
+                        <ui:Button
+                            Margin="-10,3,-10,-10"
+                            Command="{Binding UploadImageAndAttachCommand}"
+                            CommandParameter="{Binding Content, RelativeSource={RelativeSource Self}}"
+                            Content="Paste from clipboard"
+                            Icon="{ui:SymbolIcon CodeBlock20}" />
+                    </StackPanel>
+                </ui:Flyout>
+                <ui:Button
+                    Grid.Column="0"
+                    Width="35"
+                    MinHeight="35"
+                    Padding="0,0,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Panel.ZIndex="1"
+                    Background="Transparent"
+                    Command="{Binding AttachFlyoutOpenCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource Self}, Mode=OneWay}"
+                    Cursor="">
+                    <ui:SymbolIcon FontSize="20" Symbol="Attach20" />
+                </ui:Button>
+                <ui:ProgressRing
+                    Grid.Column="0"
+                    Width="35"
+                    Height="35"
+                    HorizontalAlignment="Left"
+                    Panel.ZIndex="1"
+                    IsIndeterminate="{Binding FileProgressRingVisible}"
+                    Visibility="{Binding FileProgressRingVisible, Converter={StaticResource BoolVisibilityConverter}}" />
+                <ui:TextBox
+                    x:Name="UserInputTextBox"
+                    Grid.Column="0"
+                    MinWidth="265"
+                    MaxWidth="265"
+                    Padding="35,8,10,7"
+                    AcceptsReturn="True"
+                    MaxLines="5"
+                    Text="{Binding UserInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="GotFocus">
+                            <i:InvokeCommandAction Command="{Binding UserInputTextBox_GotFocusCommand}" />
+                        </i:EventTrigger>
+                        <i:EventTrigger EventName="PreviewMouseDown">
+                            <i:InvokeCommandAction Command="{Binding UserInputTextBox_GotFocusCommand}" />
+                        </i:EventTrigger>
+                        <i:EventTrigger EventName="LostFocus">
+                            <i:InvokeCommandAction Command="{Binding UserInputTextBox_LostFocusCommand}" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                    <ui:TextBox.InputBindings>
+                        <KeyBinding
+                            Key="Enter"
+                            Command="{Binding SendCommand}"
+                            Modifiers="Control" />
+                    </ui:TextBox.InputBindings>
+                </ui:TextBox>
+            </Grid>
+            <Grid>
+                <ui:ProgressRing
+                    Width="35"
+                    Height="35"
+                    Panel.ZIndex="1"
+                    IsIndeterminate="{Binding ProgressRingVisible}"
+                    Visibility="{Binding ProgressRingVisible, Converter={StaticResource BoolVisibilityConverter}}" />
+                <ui:Button
+                    x:Name="SendButton"
+                    Width="35"
+                    MinHeight="35"
+                    Padding="0,0,0,0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Command="{Binding SendCommand}"
+                    Cursor=""
+                    IsEnabled="{Binding SendButtonEnable}"
+                    Visibility="{Binding UserInputTextBoxVisible, Converter={StaticResource BoolVisibilityConverter}}">
+                    <ui:SymbolIcon FontSize="20" Symbol="Send20" />
+                </ui:Button>
+                <ui:Button
+                    x:Name="CancelButton"
+                    Width="35"
+                    MinHeight="35"
+                    Padding="0,0,0,0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Command="{Binding CancelSendCommand}"
+                    Cursor=""
+                    Visibility="{Binding CancelButtonVisible, Converter={StaticResource BoolVisibilityConverter}}">
+                    <ui:SymbolIcon FontSize="20" Symbol="DismissCircle20" />
+                </ui:Button>
+            </Grid>
+        </StackPanel>
+        <ListView
+            Grid.Row="2"
+            Grid.Column="1"
+            BorderThickness="0"
+            ItemsSource="{Binding Files}"
+            Visibility="{Binding FileListVisible, Converter={StaticResource BoolVisibilityConverter}}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Margin="5" Orientation="Horizontal">
+                        <TextBlock
+                            Margin="5,0"
+                            VerticalAlignment="Center"
+                            Text="{Binding FileName}" />
+                        <ui:Button
+                            Command="{Binding DataContext.RemoveAttachmentCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                            CommandParameter="{Binding}"
+                            Icon="{ui:SymbolIcon Delete20}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <tray:NotifyIcon
+            Grid.Row="0"
+            FocusOnLeftClick="True"
+            Icon="pack://application:,,,/Assets/logo.png"
+            MenuOnRightClick="True"
+            TooltipText="{Binding ApplicationTitle}">
+            <tray:NotifyIcon.Menu>
+                <ContextMenu>
+                    <ui:MenuItem Click="ResetPosition_Click" Header="Reset Position" />
+                    <ui:MenuItem Click="CloseMenuItem_Click" Header="Exit" />
+                </ContextMenu>
+            </tray:NotifyIcon.Menu>
+        </tray:NotifyIcon>
+    </Grid>
+</Window>
