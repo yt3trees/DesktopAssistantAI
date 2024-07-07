@@ -27,6 +27,8 @@ namespace DesktopAssistantAI
     {
         public static new App Current => (App)Application.Current;
 
+        private static Mutex mutex;
+
         // The.NET Generic Host provides dependency injection, configuration, logging, and other services.
         // https://docs.microsoft.com/dotnet/core/extensions/generic-host
         // https://docs.microsoft.com/dotnet/core/extensions/dependency-injection
@@ -90,6 +92,15 @@ namespace DesktopAssistantAI
         /// </summary>
         private void OnStartup(object sender, StartupEventArgs e)
         {
+            bool isNewInstance;
+            mutex = new Mutex(true, "DesktopAssistantAIMutex", out isNewInstance);
+
+            if (!isNewInstance)
+            {
+                MessageBoxHelper.ShowMessageAsync("Information", "The application is already running.");
+                Environment.Exit(0);
+            }
+
             string exeConfigurationPath = System.Configuration.ConfigurationManager.OpenExeConfiguration(System.Configuration.ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
             Debug.Print("Configuration Path: " + exeConfigurationPath);
 
@@ -150,6 +161,8 @@ namespace DesktopAssistantAI
         /// </summary>
         private async void OnExit(object sender, ExitEventArgs e)
         {
+            mutex.ReleaseMutex();
+
             await _host.StopAsync();
 
             _host.Dispose();
