@@ -60,10 +60,6 @@
                 <Setter Property="Margin" Value="30,0,0,0" />
                 <Setter Property="Padding" Value="0,0,0,0" />
             </Style>
-            <Style x:Key="{x:Static markdig:MarkdownXaml.ThematicBreakStyleKey}" TargetType="{x:Type Line}">
-                <Setter Property="Stretch" Value="Fill" />
-                <Setter Property="Stroke" Value="{DynamicResource SystemBaseHighColorBrush}" />
-            </Style>
             <!--  MarkdownViewer Template  -->
             <!--
             <Style TargetType="markdig:MarkdownViewer">
