@@ -223,6 +223,11 @@ public partial class ConversationWindowViewModel : ObservableObject
     {
         try
         {
+            if (String.IsNullOrEmpty(AssistantId))
+            {
+                throw new Exception("Assistant Id is null.");
+            }
+
             IsProgressBarActive = true;
 
             OpenAIService openAiService = AssistantsApiService.CreateOpenAIServiceFromAssistantId(AssistantId);
