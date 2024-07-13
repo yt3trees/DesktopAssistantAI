@@ -14,6 +14,8 @@ namespace DesktopAssistantAI.ViewModels.Pages;
 
 public partial class StoragePageViewModel : ObservableObject
 {
+    private const int PageSize = 6;
+
     [ObservableProperty]
     private OpenAIApiConfigCollection _openAIApiConfigItems;
 
@@ -25,6 +27,8 @@ public partial class StoragePageViewModel : ObservableObject
     partial void OnIsFilesToggleButtonCheckedChanged(bool oldValue, bool newValue)
     {
         IsVectorStoresToggleButtonChecked = !newValue;
+        CurrentPage = 1;
+        UpdateCurrentPageItems();
     }
 
     [ObservableProperty]
@@ -32,6 +36,8 @@ public partial class StoragePageViewModel : ObservableObject
     partial void OnIsVectorStoresToggleButtonCheckedChanged(bool oldValue, bool newValue)
     {
         IsFilesToggleButtonChecked = !newValue;
+        CurrentPage = 1;
+        UpdateCurrentPageItems();
     }
 
     [ObservableProperty]
@@ -41,7 +47,18 @@ public partial class StoragePageViewModel : ObservableObject
     private ObservableCollection<File> _fileList = new ObservableCollection<File>();
 
     [ObservableProperty]
+    private ObservableCollection<Vector> _currentPageVectorStores = new ObservableCollection<Vector>();
+
+    [ObservableProperty]
+    private ObservableCollection<File> _currentPageFiles = new ObservableCollection<File>();
+
+    [ObservableProperty]
     private bool _isProgressBarActive = false;
+
+    [ObservableProperty]
+    private int _currentPage = 1;
+
+    public int TotalPages => (int)Math.Ceiling((double)(IsFilesToggleButtonChecked ? FileList.Count : VectorStoreList.Count) / PageSize);
 
     public StoragePageViewModel()
     {
@@ -94,6 +111,7 @@ public partial class StoragePageViewModel : ObservableObject
                     }
                 }
             }
+            UpdateCurrentPageItems();
         }
         catch (Exception ex)
         {
@@ -199,6 +217,7 @@ public partial class StoragePageViewModel : ObservableObject
                     throw new Exception(requestResponse.Error.Message);
                 }
             }
+            UpdateCurrentPageItems();
         }
         catch (Exception ex)
         {
@@ -269,6 +288,7 @@ public partial class StoragePageViewModel : ObservableObject
                     CloseButtonText = "Close",
                 }.ShowDialogAsync();
             }
+            UpdateCurrentPageItems();
         }
         catch (Exception ex)
         {
@@ -328,6 +348,7 @@ public partial class StoragePageViewModel : ObservableObject
                     }.ShowDialogAsync();
                 }
             }
+            UpdateCurrentPageItems();
         }
         catch (Exception ex)
         {
@@ -369,7 +390,6 @@ public partial class StoragePageViewModel : ObservableObject
             await MessageBoxHelper.ShowMessageAsync("Error", ex.Message);
         }
     }
-
 
     [RelayCommand]
     private async Task OnDownloadFile(object parameter)
@@ -424,6 +444,52 @@ public partial class StoragePageViewModel : ObservableObject
         {
             IsProgressBarActive = false;
         }
+    }
+
+    [RelayCommand]
+    private void PreviousPage()
+    {
+        if (CurrentPage > 1)
+        {
+            CurrentPage--;
+            UpdateCurrentPageItems();
+        }
+    }
+
+    [RelayCommand]
+    private void NextPage()
+    {
+        if (CurrentPage < TotalPages)
+        {
+            CurrentPage++;
+            UpdateCurrentPageItems();
+        }
+    }
+
+    private void UpdateCurrentPageItems()
+    {
+        if (IsFilesToggleButtonChecked)
+        {
+            var filesToShow = FileList.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+            CurrentPageFiles.Clear();
+
+            foreach (var file in filesToShow)
+            {
+                CurrentPageFiles.Add(file);
+            }
+        }
+        else if (IsVectorStoresToggleButtonChecked)
+        {
+            var vectorsToShow = VectorStoreList.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+            CurrentPageVectorStores.Clear();
+
+            foreach (var vector in vectorsToShow)
+            {
+                CurrentPageVectorStores.Add(vector);
+            }
+        }
+
+        OnPropertyChanged(nameof(TotalPages));
     }
 
     public class Vector
