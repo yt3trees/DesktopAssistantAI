@@ -20,7 +20,7 @@ public class AvatarControlHelper
         }
         if (sizeType == "ExtraSmall")
         {
-            return 50;
+            return 70;
         }
         else
         {
