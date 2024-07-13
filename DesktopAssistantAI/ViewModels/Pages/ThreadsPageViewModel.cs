@@ -86,7 +86,7 @@ public partial class ThreadsPageViewModel : ObservableObject
             FilteredThreads.Remove(threadManager);
 
             ThreadManagerService threadManagerService = new ThreadManagerService();
-            threadManagerService.SaveThreadManagerCollection(Threads);
+            threadManagerService.DeleteThreadManager(threadManager);
 
             UpdateCurrentPageThreads();
         }

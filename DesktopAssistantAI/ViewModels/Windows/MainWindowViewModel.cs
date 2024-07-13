@@ -337,7 +337,7 @@ public partial class MainWindowViewModel : ObservableObject
                     ResponseMessagePart = "None",
                 };
                 _threadManagerCollection.Add(threadManager);
-                _threadManagerService.SaveThreadManagerCollection(_threadManagerCollection);
+                _threadManagerService.SaveThreadManager(threadManager);
             }
 
             // create message
@@ -484,7 +484,7 @@ public partial class MainWindowViewModel : ObservableObject
             if (threadManagerToUpdate != null && threadManagerToUpdate.ResponseMessagePart == "None")
             {
                 threadManagerToUpdate.ResponseMessagePart = StringOperationHelper.TruncateString(responseTextTotal, 40);
-                _threadManagerService.SaveThreadManagerCollection(_threadManagerCollection);
+                _threadManagerService.SaveThreadManager(threadManagerToUpdate);
             }
         }
         catch (Exception ex)

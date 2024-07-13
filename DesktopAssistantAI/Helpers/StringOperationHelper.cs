@@ -10,6 +10,13 @@ public class StringOperationHelper
         return localDateTime.ToString("yyyy/MM/dd HH:mm");
     }
 
+    public static string FormatDateTime(int targetDatetime, string format)
+    {
+        var dateTime = DateTimeOffset.FromUnixTimeSeconds((long)targetDatetime).UtcDateTime;
+        var localDateTime = dateTime.ToLocalTime();
+        return localDateTime.ToString(format);
+    }
+
     public static string TruncateString(string input, int maxBytes)
     {
         input = input.Replace("\r\n", "").Replace("\n", "");

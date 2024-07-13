@@ -44,10 +44,12 @@ public class ThreadManagerService
         _ = Directory.CreateDirectory(_appFolderPath);
     }
 
-    public void SaveThreadManagerCollection(ThreadManagerCollection collection)
+    public void SaveThreadManager(ThreadManager threadManager)
     {
-        string filePath = Path.Combine(_appFolderPath, "threads.json");
-        string json = JsonSerializer.Serialize(collection, new JsonSerializerOptions
+        string timestamp = StringOperationHelper.FormatDateTime(threadManager.CreatedAt, "yyyyMMddHHmmss");
+        string fileName = $"thread_{timestamp}_{threadManager.ThreadId}.json";
+        string filePath = Path.Combine(_appFolderPath, fileName);
+        string json = JsonSerializer.Serialize(threadManager, new JsonSerializerOptions
         {
             WriteIndented = true,
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
@@ -57,12 +59,28 @@ public class ThreadManagerService
 
     public ThreadManagerCollection LoadThreadManagerCollection()
     {
-        string filePath = Path.Combine(_appFolderPath, "threads.json");
+        var collection = new ThreadManagerCollection();
+        var files = Directory.GetFiles(_appFolderPath, "thread_*.json");
+        foreach (var file in files)
+        {
+            string json = File.ReadAllText(file);
+            var threadManager = JsonSerializer.Deserialize<ThreadManager>(json);
+            if (threadManager != null)
+            {
+                collection.Add(threadManager);
+            }
+        }
+        return collection;
+    }
+
+    public void DeleteThreadManager(ThreadManager threadManager)
+    {
+        string timestamp = StringOperationHelper.FormatDateTime(threadManager.CreatedAt, "yyyyMMddHHmmss");
+        string fileName = $"thread_{timestamp}_{threadManager.ThreadId}.json";
+        string filePath = Path.Combine(_appFolderPath, fileName);
         if (File.Exists(filePath))
         {
-            string json = File.ReadAllText(filePath);
-            return JsonSerializer.Deserialize<ThreadManagerCollection>(json) ?? new ThreadManagerCollection();
+            File.Delete(filePath);
         }
-        return new ThreadManagerCollection();
     }
 }
