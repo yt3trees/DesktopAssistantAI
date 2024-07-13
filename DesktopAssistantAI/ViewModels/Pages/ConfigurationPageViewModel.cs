@@ -505,6 +505,7 @@ public partial class ConfigurationPageViewModel : ObservableObject
     {
         try
         {
+            IsAssistantProgressBarActive = true;
             OpenAIService openAiService = AssistantsApiService.CreateOpenAIService(SelectedOpenAIApiConfigItem.ConfigurationName);
 
             VectorStoreFileListRequest vectorRequest = new VectorStoreFileListRequest();
@@ -525,12 +526,17 @@ public partial class ConfigurationPageViewModel : ObservableObject
 
             var vectorStoreInfo = await openAiService.RetrieveVectorStore(VectorStoreId);
 
+            IsAssistantProgressBarActive = false;
             var window = new VectorStoreInfo(vectorStoreInfo, vectorFileList, SelectedOpenAIApiConfigItem.ConfigurationName);
             window.ShowDialog();
         }
         catch (Exception ex)
         {
             await MessageBoxHelper.ShowMessageAsync("Error", ex.Message);
+        }
+        finally
+        {
+            IsAssistantProgressBarActive = false;
         }
     }
 
