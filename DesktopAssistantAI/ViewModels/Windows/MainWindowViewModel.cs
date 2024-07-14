@@ -590,20 +590,26 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ClearActiveThread(MouseButtonEventArgs e)
+    private async Task ClearActiveThreadDoubleClick(MouseButtonEventArgs e)
     {
         if (e.ClickCount == 2)
         {
-            ActiveThreadId = string.Empty;
-            ResponseText = new FlowDocument();
-            ResponseTextBoxVisible = false;
-            Files = new FileObjects();
+            _ = ClearActiveThread();
+        }
+    }
 
-            if (!IsFlyoutOpen)
-            {
-                await Task.Delay(1);
-                IsFlyoutOpen = true;
-            }
+    [RelayCommand]
+    private async Task ClearActiveThread()
+    {
+        ActiveThreadId = string.Empty;
+        ResponseText = new FlowDocument();
+        ResponseTextBoxVisible = false;
+        Files = new FileObjects();
+
+        if (!IsFlyoutOpen)
+        {
+            await Task.Delay(1);
+            IsFlyoutOpen = true;
         }
     }
 

@@ -123,6 +123,11 @@
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                         Header="Set Thread ID"
                         Icon="{ui:SymbolIcon ChatAdd20}" />
+                    <ui:MenuItem
+                        Command="{Binding ClearActiveThreadCommand}"
+                        Header="Clear Active Thread"
+                        Icon="{ui:SymbolIcon ChatDismiss20}"
+                        Visibility="{Binding ActiveThreadId, Converter={StaticResource StringToVisibilityConverter}}" />
                 </ui:MenuItem>
                 <ui:MenuItem
                     Command="{Binding OpenSettingsWindowCommand}"
@@ -222,7 +227,7 @@
                 Source="{Binding SelectedAvatarConfigItem.AvatarImagePath}">
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="MouseLeftButtonDown">
-                        <i:InvokeCommandAction Command="{Binding ClearActiveThreadCommand}" PassEventArgsToCommand="True" />
+                        <i:InvokeCommandAction Command="{Binding ClearActiveThreadDoubleClickCommand}" PassEventArgsToCommand="True" />
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
             </Image>
