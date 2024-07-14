@@ -20,6 +20,8 @@ The avatar to be displayed can be any png image.
 ### Keeping Threads
 Threads are stored in a local file as history. As long as the thread is alive, past conversations can be referenced.
 
+https://github.com/user-attachments/assets/f795ae99-0134-45d5-a715-808369395b95
+
 ## How to create an installer
 ### Requirements
 - Visual Studio 2022
