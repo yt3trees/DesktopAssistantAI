@@ -343,6 +343,7 @@
                     Padding="35,8,10,7"
                     AcceptsReturn="True"
                     MaxLines="5"
+                    PlaceholderText="{Binding SelectedAssistant.AssistantName}"
                     Text="{Binding UserInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="GotFocus">
