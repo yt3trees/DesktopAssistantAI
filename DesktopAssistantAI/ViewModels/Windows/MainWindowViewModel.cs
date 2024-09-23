@@ -661,48 +661,48 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        string fileName = string.Empty;
-        byte[] fileBytes = [];
-        if (content != "Paste from clipboard")
+        try
         {
-            OpenFileDialog openFileDialog = new()
+            string fileName = string.Empty;
+            byte[] fileBytes = [];
+            if (content != "Paste from clipboard")
             {
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                Filter = "All files (*.*)|*.*"
-            };
-            if (openFileDialog.ShowDialog() != true)
-            {
-                return;
-            }
-            if (!File.Exists(openFileDialog.FileName))
-            {
-                return;
-            }
-            fileName = Path.GetFileName(openFileDialog.FileName);
-            fileBytes = File.ReadAllBytes(openFileDialog.FileName);
-        }
-        else
-        {
-            if (Clipboard.ContainsImage())
-            {
-                var image = Clipboard.GetImage();
-                using (var memoryStream = new MemoryStream())
+                OpenFileDialog openFileDialog = new()
                 {
-                    var encoder = new PngBitmapEncoder();
-                    encoder.Frames.Add(BitmapFrame.Create(image));
-                    encoder.Save(memoryStream);
-                    fileBytes = memoryStream.ToArray();
-                    fileName = "clipboard.png";
+                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    Filter = "All files (*.*)|*.*"
+                };
+                if (openFileDialog.ShowDialog() != true)
+                {
+                    return;
                 }
+                if (!File.Exists(openFileDialog.FileName))
+                {
+                    return;
+                }
+                fileName = Path.GetFileName(openFileDialog.FileName);
+                fileBytes = File.ReadAllBytes(openFileDialog.FileName);
             }
             else
             {
-                await MessageBoxHelper.ShowMessageAsync("Error", "The clipboard does not contain any images.");
+                if (Clipboard.ContainsImage())
+                {
+                    var image = Clipboard.GetImage();
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        var encoder = new PngBitmapEncoder();
+                        encoder.Frames.Add(BitmapFrame.Create(image));
+                        encoder.Save(memoryStream);
+                        fileBytes = memoryStream.ToArray();
+                        fileName = "clipboard.png";
+                    }
+                }
+                else
+                {
+                    await MessageBoxHelper.ShowMessageAsync("Error", "The clipboard does not contain any images.");
+                }
             }
-        }
 
-        try
-        {
             FileProgressRingVisible = true;
             AssistantsApiConfig assistantConfig = AssistantsApiConfigManager.GetSelectedAssistantConfig();
             var openAiService = AssistantsApiService.CreateOpenAIService(assistantConfig.ConfigurationName);
